@@ -51,6 +51,8 @@ const influxdb = new influx.InfluxDB({
     host: options.influxdbHost,
     port: options.influxdbPort,
     database: options.influxdbDatabase,
+    username: options.influxdbUsername,
+    password: options.influxdbPassword
 });
 
 const client = mqtt.connect(options.mqtt, {
