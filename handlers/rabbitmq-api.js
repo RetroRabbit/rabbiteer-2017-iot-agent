@@ -14,6 +14,23 @@ class RabbitMqApiConnection {
         if (!options.url) throw "options.url was not specified";
 
         this.options = options;
+
+        if (options.logger) {
+            this._verbose = options.logger.verbose.bind(options.logger);
+            this._error = options.logger.error.bind(options.logger);
+            this._warn = options.logger.warn.bind(options.logger);
+            this._silly = options.logger.silly.bind(options.logger);
+            this._debug = options.logger.debug.bind(options.logger);
+            this._info = options.logger.info.bind(options.logger);
+        } else {
+            const f = function () { };
+            this._verbose = f;
+            this._error = f;
+            this._warn = f;
+            this._silly = f;
+            this._debug = f;
+            this._info = f;
+        }
     }
 
     async _request(path, method = 'GET', body = undefined) {
@@ -25,9 +42,18 @@ class RabbitMqApiConnection {
             user: username, pass: password
         };
 
-        const response = await request(url, { method, auth, body, json: true });
+        this._verbose(`RabbitMQ Request ${method} ${path}`);
+        if (body) { this._silly(`RabbitMQ Request body: ${JSON.stringify(body)}`); }
 
-        return response;
+        try {
+            const response = await request(url, { method, auth, body, json: true });
+            this._silly(`RabbitMQ Request ${method} ${path} response: ${JSON.stringify(response)}`);
+            return response;
+        }
+        catch (e) {
+            this._warn(`RabbitMQ Request error ${method} ${path} error: ${JSON.stringify(e)}`);
+            throw e;
+        }
     }
 
     _post(path, body) {
