@@ -1,9 +1,10 @@
 const mqtt = require('mqtt');
 const influx = require('influx');
-const RabbitMqApiConnection = require('./rabbitmq-api').RabbitMqApiConnection;
 const _ = require('lodash');
 const program = require('commander');
 const package = require('./package.json');
+
+const handlerClasses = require('./handlers');
 
 const rxHostPort = /^([^\s:]+)(?::(\d+))?$/;
 
@@ -65,21 +66,27 @@ client.on('connected', () => console.log('connected'));
 
 client.on('error', e => console.error(e));
 
+const handlers = handlerClasses.map(
+    handler => new handler(options, client, influxdb));
+
 client.on('message', (topic, payload, packet) => {
-    // <metric>/<name>
-    var metricmatch = packet.topic.match(/^([^/]+)\/([^/]+)$/);
-    if (metricmatch) {
-        const metric = metricmatch[1];
-        const name = metricmatch[2];
-        const value = parseFloat(packet.payload);
-        if (!isNaN(value) && isFinite(value)) {
-            influxdb.writePoints([{
-                measurement: metric,
-                tags: { name, client: client.id },
-                fields: { value }
-            }]).catch(console.error);
+
+    handlers.filter(x=> {
+        if(x.pattern) {
+            if (_.isRegExp(x.pattern)) {
+                return x.pattern.test(topic);
+            } else if (_.isString(x.pattern)) {
+                return new RegExp(x.pattern).test(topic);
+            } else if(_.isArray(x.pattern)) {
+                return _(x.pattern)
+                    .filter(p => p.test(topic))
+                    .length != 0;
+            }
         }
-    }
+    }).forEach(handler => {
+        handler.message(topic, payload, packet);
+    });
+
 });
 
 client.subscribe('#');
