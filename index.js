@@ -3,6 +3,7 @@ const influx = require('influx');
 const _ = require('lodash');
 const program = require('commander');
 const package = require('./package.json');
+const logger = require('./logger');
 
 const handlerClasses = require('./handlers');
 
@@ -38,15 +39,14 @@ const options = {
     rabbitmqPassword: program.rabbitmqPassword || program.password,
 };
 
-console.log('Configuration:')
+logger.verbose('Configuration:')
 Object.keys(options).forEach(k => {
-    if(/[pP]assword/.test(k)) {
-        console.log(`${k}: ********`);
+    if (/[pP]assword/.test(k)) {
+        logger.verbose(`${k}: ********`);
     } else {
-        console.log(`${k}: ${options[k] || ''}`);
+        logger.verbose(`${k}: ${options[k] || ''}`);
     }
 });
-console.log();
 
 const influxdb = new influx.InfluxDB({
     host: options.influxdbHost,
@@ -62,32 +62,56 @@ const client = mqtt.connect(options.mqtt, {
     password: options.mqttPassword
 });
 
-client.on('connected', () => console.log('connected'));
+client.on('connected', () => logger.info(`connected to ${options.mqtt}`));
 
-client.on('error', e => console.error(e));
+client.on('error', e => logger.error(e));
 
+
+
+handlerClasses.forEach(handler => logger.verbose(`Registered handler: ${handler.name}`));
 const handlers = handlerClasses.map(
-    handler => new handler(options, client, influxdb));
+    handler => new handler(options, client, influxdb, logger));
+
 
 client.on('message', (topic, payload, packet) => {
+    logger.debug(`Received message on ${topic}`);
+    logger.silly(`Message: ${payload}`);
 
-    handlers.filter(x=> {
-        if(x.pattern) {
+    handlers.forEach(x => {
+        if (x.pattern) {
+            let match;
+            
+            logger.debug(`Testing ${topic} with ${x.pattern} for ${x.constructor.name}`);
             if (_.isRegExp(x.pattern)) {
-                return x.pattern.test(topic);
+                match = topic.match(x.pattern);
             } else if (_.isString(x.pattern)) {
-                return new RegExp(x.pattern).test(topic);
-            } else if(_.isArray(x.pattern)) {
-                return _(x.pattern)
-                    .filter(p => p.test(topic))
-                    .length != 0;
+                match = topic.match(new RegExp(x.pattern));
+            } else if (_.isArray(x.pattern)) {
+                match = _(x.pattern)
+                    .filter(p => topic.match(_.isRegExp(p) ? p : new RegExp(p)))
+                    .first();
+            }
+
+            if (match) {
+                logger.debug(`Testing ${topic} matched ${x.pattern}`);
+                x.message(match, payload, packet);
+            } else {
+                logger.debug(`Testing ${topic} did not match ${x.pattern}`);
             }
         }
-    }).forEach(handler => {
-        handler.message(topic, payload, packet);
+
     });
 
 });
 
-client.subscribe('#');
+logger.info("Subscribing to #")
+client.subscribe('#', e => {
+    if (e) {
+        logger.verbose(`error subscribing: ${e}`);
+    }
+    else {
+        logger.debug('subscribed to #');
+    }
+
+});
 
