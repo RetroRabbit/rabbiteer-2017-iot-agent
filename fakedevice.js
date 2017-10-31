@@ -27,6 +27,6 @@ var hum = 50 + plusminus(25);
 setInterval(() => {
     temp += plusminus(1);
     hum += plusminus(1);
-    client.publish(`temprature/${client.options.clientId}`, temp.toString(), { retain: true });
-    client.publish(`humidity/${client.options.clientId}`, hum.toString(), { retain: true });
+    client.publish(`metric/temprature/${client.options.clientId}`, temp.toString(), { retain: true });
+    client.publish(`metric/humidity/${client.options.clientId}`, hum.toString(), { retain: true });
 }, 5000);
