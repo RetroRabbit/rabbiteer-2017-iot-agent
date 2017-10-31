@@ -21,7 +21,7 @@ program
     .option('--rabbitmq-password [password]', 'The RabbitMQ password. Defaults to the MQTT password')
     .parse(process.argv);
 
-const influxhostport = rxHostPort.match(program.influxdb);
+const influxhostport = program.influxdb.match(rxHostPort);
 
 const options = {
     mqtt: program.mqtt,
