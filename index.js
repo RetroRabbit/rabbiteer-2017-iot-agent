@@ -38,20 +38,14 @@ const options = {
 };
 
 console.log('Configuration:')
-Object.keys(options).forEach(k => console.log(`${k}: ${options[k] || ''}`));
-console.log();
-
-const influxSettings = {
-    host: influx_host,
-    port: influx_port,
-    database: influx_database
-};
-
-const rabbitmq = new RabbitMqApiConnection({
-    url: options.rabbitmq,
-    username: options.rabbitmqUsername,
-    password: options.rabbitmqPassword
+Object.keys(options).forEach(k => {
+    if(/[pP]assword/.test(k)) {
+        console.log(`${k}: ********`);
+    } else {
+        console.log(`${k}: ${options[k] || ''}`);
+    }
 });
+console.log();
 
 const influxdb = new influx.InfluxDB({
     host: options.influxdbHost,
