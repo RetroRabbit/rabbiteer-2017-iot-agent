@@ -2,11 +2,12 @@ const RabbitMqApiConnection = require('./rabbitmq-api').RabbitMqApiConnection;
 const _ = require('lodash');
 
 class ConnectionHandler {
-    constructor(options, mqtt, influx) {
+    constructor(options, mqtt, influx, logger) {
         const rabbitmq = new RabbitMqApiConnection({
             url: options.rabbitmqUrl,
             username: options.rabbitmqUsername,
-            password: options.rabbitmqPassword
+            password: options.rabbitmqPassword,
+            logger: logger
         });
 
         this._interval = setInterval(() => {
@@ -30,6 +31,7 @@ class ConnectionHandler {
                         })
                         .value();
     
+                    logger.silly(`writing connections: ${JSON.stringify(connections)}`);
                     influx.writePoints(messages).catch(console.error);
                 });
         }, 5000);
