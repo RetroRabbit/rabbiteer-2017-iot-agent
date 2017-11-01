@@ -21,6 +21,7 @@ program
     .option('-r, --rabbitmq [url]', 'The RabbitMQ management interface url. Defaults to http://localhost:15672/', 'http://localhost:15672/')
     .option('--rabbitmq-username [username]', 'The RabbitMQ username. Defaults to the MQTT username')
     .option('--rabbitmq-password [password]', 'The RabbitMQ password. Defaults to the MQTT password')
+    .option('--slack-token', 'A token for accessing the slack API')
     .parse(process.argv);
 
 const influxhostport = program.influxdb.match(rxHostPort);
@@ -37,6 +38,7 @@ const options = {
     rabbitmqUrl: program.rabbitmq,
     rabbitmqUsername: program.rabbitmqUsername || program.username,
     rabbitmqPassword: program.rabbitmqPassword || program.password,
+    slackToken: program.slackToken
 };
 
 logger.verbose('Configuration:')
@@ -80,7 +82,7 @@ client.on('message', (topic, payload, packet) => {
     handlers.forEach(x => {
         if (x.pattern) {
             let match;
-            
+
             logger.debug(`Testing ${topic} with ${x.pattern} for ${x.constructor.name}`);
             if (_.isRegExp(x.pattern)) {
                 match = topic.match(x.pattern);
