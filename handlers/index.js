@@ -3,7 +3,8 @@ var _ = require('lodash');
 
 const handlers = [
     './connectionsHandler',
-    './metricsHandler'
+    './metricsHandler',
+    './slackHandler'
 ]
 
 const allHanlderClasses = _(handlers)
