@@ -21,7 +21,7 @@ program
     .option('-r, --rabbitmq [url]', 'The RabbitMQ management interface url. Defaults to http://localhost:15672/', 'http://localhost:15672/')
     .option('--rabbitmq-username [username]', 'The RabbitMQ username. Defaults to the MQTT username')
     .option('--rabbitmq-password [password]', 'The RabbitMQ password. Defaults to the MQTT password')
-    .option('--slack-token', 'A token for accessing the slack API')
+    .option('--slack-token [token]', 'A token for accessing the slack API')
     .parse(process.argv);
 
 const influxhostport = program.influxdb.match(rxHostPort);
@@ -70,39 +70,48 @@ client.on('error', e => logger.error(e));
 
 
 
-handlerClasses.forEach(handler => logger.verbose(`Registered handler: ${handler.name}`));
 const handlers = handlerClasses.map(
     handler => new handler(options, client, influxdb, logger));
 
+logger.info(`Registered handlers: ${_.values(handlers).map(x=>x.constructor.name)}`);
 
 client.on('message', (topic, payload, packet) => {
-    logger.debug(`Received message on ${topic}`);
-    logger.silly(`Message: ${payload}`);
 
-    handlers.forEach(x => {
-        if (x.pattern) {
-            let match;
+    (async () => {
 
-            logger.debug(`Testing ${topic} with ${x.pattern} for ${x.constructor.name}`);
-            if (_.isRegExp(x.pattern)) {
-                match = topic.match(x.pattern);
-            } else if (_.isString(x.pattern)) {
-                match = topic.match(new RegExp(x.pattern));
-            } else if (_.isArray(x.pattern)) {
-                match = _(x.pattern)
-                    .filter(p => topic.match(_.isRegExp(p) ? p : new RegExp(p)))
-                    .first();
+        logger.debug(`Received message on ${topic}`);
+        logger.silly(`Message: ${payload}`);
+    
+        const promises = handlers.map(async x => {
+            if (x.pattern) {
+                let match;
+    
+                logger.debug(`Testing ${topic} with ${x.pattern} for ${x.constructor.name}`);
+                if (_.isRegExp(x.pattern)) {
+                    match = topic.match(x.pattern);
+                } else if (_.isString(x.pattern)) {
+                    match = topic.match(new RegExp(x.pattern));
+                } else if (_.isArray(x.pattern)) {
+                    match = _(x.pattern)
+                        .filter(p => topic.match(_.isRegExp(p) ? p : new RegExp(p)))
+                        .first();
+                }
+    
+                if (match) {
+                    logger.debug(`Testing ${topic} matched ${x.pattern}`);
+                    await x.message(match, payload, packet);
+                } else {
+                    logger.debug(`Testing ${topic} did not match ${x.pattern}`);
+                }
             }
+    
+        });
 
-            if (match) {
-                logger.debug(`Testing ${topic} matched ${x.pattern}`);
-                x.message(match, payload, packet);
-            } else {
-                logger.debug(`Testing ${topic} did not match ${x.pattern}`);
-            }
-        }
-
+        await Promise.all(promises);
+    })().catch(e => {
+        logger.error(`message handling error: ${e}`);
     });
+
 
 });
 

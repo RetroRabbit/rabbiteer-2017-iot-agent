@@ -39,7 +39,7 @@ class ConnectionHandler {
 
     get pattern() { return null; }
 
-    message(topic, payload, packet) {}
+    async message(topic, payload, packet) {}
 
     stop() { clearInterval(this._interval); }
 }
