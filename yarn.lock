@@ -1827,6 +1827,12 @@ signal-exit@^3.0.0, signal-exit@^3.0.2:
   version "3.0.2"
   resolved "https://registry.yarnpkg.com/signal-exit/-/signal-exit-3.0.2.tgz#b5fdc08f1287ea1178628e415e25132b73646c6d"
 
+slack@^9.0.8:
+  version "9.0.8"
+  resolved "https://registry.yarnpkg.com/slack/-/slack-9.0.8.tgz#21dcdcb4c1f14a771969b8db786f01b33f6f8f8d"
+  dependencies:
+    tiny-json-http "^5.2.0"
+
 sntp@1.x.x:
   version "1.0.9"
   resolved "https://registry.yarnpkg.com/sntp/-/sntp-1.0.9.tgz#6541184cc90aeea6c6e7b35e2659082443c66198"
@@ -2005,6 +2011,10 @@ timed-out@^4.0.0:
 timespan@~2.3.0:
   version "2.3.0"
   resolved "https://registry.yarnpkg.com/timespan/-/timespan-2.3.0.tgz#4902ce040bd13d845c8f59b27e9d59bad6f39929"
+
+tiny-json-http@^5.2.0:
+  version "5.3.1"
+  resolved "https://registry.yarnpkg.com/tiny-json-http/-/tiny-json-http-5.3.1.tgz#8321e63bff8b9b291b1074a86097e766a0b0f6ba"
 
 to-absolute-glob@^2.0.0:
   version "2.0.1"
