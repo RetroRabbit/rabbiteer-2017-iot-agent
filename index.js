@@ -3,7 +3,7 @@ const influx = require('influx');
 const _ = require('lodash');
 const program = require('commander');
 const package = require('./package.json');
-const logger = require('./logger');
+const createlogger = require('./logger');
 
 const handlerClasses = require('./handlers');
 
@@ -22,9 +22,12 @@ program
     .option('--rabbitmq-username [username]', 'The RabbitMQ username. Defaults to the MQTT username')
     .option('--rabbitmq-password [password]', 'The RabbitMQ password. Defaults to the MQTT password')
     .option('--slack-token [token]', 'A token for accessing the slack API')
+    .option('--loglevel [level]', 'The minimum log level. Same as npm log levels. Default is info.', 'info')
     .parse(process.argv);
 
 const influxhostport = program.influxdb.match(rxHostPort);
+
+const logger = createlogger(program.loglevel);
 
 const options = {
     mqtt: program.mqtt,

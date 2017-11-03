@@ -3,8 +3,8 @@ const { combine, timestamp, label, printf, colorize } = format;
 const { Console } = transports;
 
 
-module.exports = createLogger({
-    level: 'debug',
+module.exports = (loglevel) => createLogger({
+    level: loglevel,
     format: combine(printf(info => {
         return `${info.level}: ${info.message}`;
     }),
