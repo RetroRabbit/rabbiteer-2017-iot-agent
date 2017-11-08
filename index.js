@@ -4,6 +4,7 @@ const _ = require('lodash');
 const program = require('commander');
 const package = require('./package.json');
 const createlogger = require('./logger');
+const SlackEventListener = require('./slackEventListener');
 
 const handlerClasses = require('./handlers');
 
@@ -22,6 +23,8 @@ program
     .option('--rabbitmq-username [username]', 'The RabbitMQ username. Defaults to the MQTT username')
     .option('--rabbitmq-password [password]', 'The RabbitMQ password. Defaults to the MQTT password')
     .option('--slack-token [token]', 'A token for accessing the slack API')
+    .option('--slack-verification-token [token]', 'A token for verifying the requests for the events API')
+    .option('--event-port [port]', 'The port on which to listen for HTTP events. Defaults to $PORT or 5295', process.env.PORT || 5295)
     .option('--loglevel [level]', 'The minimum log level. Same as npm log levels. Default is info.', 'info')
     .parse(process.argv);
 
@@ -41,6 +44,7 @@ const options = {
     rabbitmqUrl: program.rabbitmq,
     rabbitmqUsername: program.rabbitmqUsername || program.username,
     rabbitmqPassword: program.rabbitmqPassword || program.password,
+    eventPort: program.eventPort,
     slackToken: program.slackToken
 };
 
@@ -61,6 +65,11 @@ const influxdb = new influx.InfluxDB({
     password: options.influxdbPassword
 });
 
+//slack event listener
+const slackListener = new SlackEventListener(options.eventPort, logger);
+slackListener.listen().catch(e => logger.error(e));
+
+//mqtt client
 const client = mqtt.connect(options.mqtt, {
     clientId: 'agent',
     username: options.mqttUsername,
@@ -70,8 +79,6 @@ const client = mqtt.connect(options.mqtt, {
 client.on('connected', () => logger.info(`connected to ${options.mqtt}`));
 
 client.on('error', e => logger.error(e));
-
-
 
 const handlers = handlerClasses.map(
     handler => new handler(options, client, influxdb, logger));
