@@ -70,23 +70,37 @@ module.exports = class SlackEventListener extends EventEmitter {
                     badRequest();
                 } else {
                     if (requestBody.type) {
-                        this._verbose(`Got request ${req.method} ${req.url} with type ${requestBody.type}`);
+                        this._debug(`Got request ${req.method} ${req.url} with type ${requestBody.type}`);
                         this._silly(`Slack event body: \n${JSON.stringify(requestBody, null, '  ')}`);
 
-                        switch (requestBody.type) {
-                            case "url_verification":
-                                if (requestBody.token == this.verificationToken) {
-                                    this._info("Got valid URL validation request");
-                                    text(requestBody.challenge);
-                                } else {
-                                    this._error("Got invalid URL validation request");
-                                    badRequest();
-                                }
-                                break;
-                            default:
-                                this.emit(requestBody.type, requestBody);
-                                ok();
-                                break;
+
+                        if (!requestBody.token || requestBody.token == this.verificationToken) {
+                            text(requestBody.challenge);
+
+                            switch (requestBody.type) {
+                                case "url_verification":
+                                    if(requestBody.token) {
+                                        this._info("Got valid URL validation request");
+                                        ok();
+                                    } else {
+                                        this._warn("Got invalid token in request");
+                                        badRequest();
+                                    }
+                                    break;
+                                case "event_callback":
+                                    const event = requestBody.event;
+                                    this._verbose(`Got Slack event of type ${event.type}`);
+                                    this._silly(`Slack event: \n${JSON.stringify(event, null, '  ')}`);
+                                    this.emit(event.type, event);
+                                    break;
+                                default:
+                                    this._warn(`unsupported event type: ${requestBody.type}`);
+                                    ok();
+                                    break;
+                            }
+                        } else {
+                            this._warn("Got invalid token in request");
+                            badRequest();
                         }
 
                     } else {

@@ -38,13 +38,15 @@ class SlackHandler {
                 } else {
                     const channel = channel_info.name;
                     const topic = `slack/${channel}`;
-                    this._logger.verbose(`Publishing ${text} to mqtt topic slack/${channel}`);
-                    
+
                     const moniker_ix = this._ignore.indexOf(`(slack) ${channel}/${text}`)
-                    if(moniker_ix >= 0) {
+                    if (moniker_ix >= 0) {
+                        this._logger.silly(`ingoring mqtt message for #${channel}: ${text}`);
                         this._ignore.splice(moniker_ix, 1);
                     } else {
                         this._ignore.push(`(mqtt) ${channel}/${text}`);
+
+                    this._logger.verbose(`Publishing ${text} to mqtt topic slack/${channel}`);
                         this._mqtt.publish(topic, text);
                     }
                 }
@@ -103,18 +105,20 @@ class SlackHandler {
             if (!channel_info) {
                 this._logger.info(`Not sending message to nonexistent channel ${channel}`);
             } else {
-                this._logger.verbose(`Sending slack message to channel #${channel}.`);
-                this._logger.verbose(`slack message for #${channel}: ${payload}`);
                 const channel_id = channel_info.id;
                 const text = payload.toString();
-                this._logger.verbose(`Sending ${text} to slack channel ${channel} (${channel_id})`);
 
 
                 const moniker_ix = this._ignore.indexOf(`(mqtt) ${channel}/${text}`)
-                if(moniker_ix >= 0) {
+                if (moniker_ix >= 0) {
+                    this._logger.silly(`ingoring slack message for #${channel}: ${payload}`);
                     this._ignore.splice(moniker_ix, 1);
                 } else {
                     this._ignore.push(`(slack) ${channel}/${text}`);
+
+                    this._logger.verbose(`Sending slack message to channel #${channel}.`);
+                    this._logger.verbose(`slack message for #${channel}: ${payload}`);
+                    this._logger.verbose(`Sending ${text} to slack channel ${channel} (${channel_id})`);
                     await slack.chat.postMessage({ token, channel: channel_id, text });
                 }
             }
