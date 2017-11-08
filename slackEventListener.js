@@ -2,8 +2,9 @@ const http = require('http');
 
 
 module.exports = class SlackEventListener {
-    constructor(port, logger) {
+    constructor(port, verificationToken, logger) {
         this.port = port;
+        this.verificationToken = verificationToken;
 
         if (logger) {
             this._verbose = logger.verbose.bind(logger);
@@ -70,7 +71,13 @@ module.exports = class SlackEventListener {
 
                         switch (requestBody.type) {
                             case "url_verification":
-                                text(requestBody.challenge);
+                                if(requestBody.token == this.verificationToken) {
+                                    this._info("Got valid URL validation request");
+                                    text(requestBody.challenge);
+                                } else {
+                                    this._error("Got invalid URL validation request");
+                                    badRequest();
+                                }
                                 break;
                             default:
                                 ok();

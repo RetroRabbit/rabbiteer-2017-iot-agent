@@ -10,6 +10,7 @@ const handlerClasses = require('./handlers');
 
 const rxHostPort = /^([^\s:]+)(?::(\d+))?$/;
 
+
 program
     .version(package.version)
     .option('-m, --mqtt [url]', 'The MQTT url. Defaults to mqtt://localhost', 'mqtt://localhost')
@@ -45,7 +46,8 @@ const options = {
     rabbitmqUsername: program.rabbitmqUsername || program.username,
     rabbitmqPassword: program.rabbitmqPassword || program.password,
     eventPort: program.eventPort,
-    slackToken: program.slackToken
+    slackToken: program.slackToken,
+    slackVerificationToken: program.slackVerificationToken
 };
 
 logger.verbose('Configuration:')
@@ -66,7 +68,7 @@ const influxdb = new influx.InfluxDB({
 });
 
 //slack event listener
-const slackListener = new SlackEventListener(options.eventPort, logger);
+const slackListener = new SlackEventListener(options.eventPort, options.slackVerificationToken, logger);
 slackListener.listen().catch(e => logger.error(e));
 
 //mqtt client
