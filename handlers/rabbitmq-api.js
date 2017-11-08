@@ -42,7 +42,7 @@ class RabbitMqApiConnection {
             user: username, pass: password
         };
 
-        this._verbose(`RabbitMQ Request ${method} ${path}`);
+        this._silly(`RabbitMQ Request ${method} ${path}`);
         if (body) { this._silly(`RabbitMQ Request body: ${JSON.stringify(body)}`); }
 
         try {
