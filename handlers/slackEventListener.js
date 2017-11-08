@@ -1,8 +1,11 @@
 const http = require('http');
+const EventEmitter = require('events');
 
 
-module.exports = class SlackEventListener {
+module.exports = class SlackEventListener extends EventEmitter {
     constructor(port, verificationToken, logger) {
+        super();
+        
         this.port = port;
         this.verificationToken = verificationToken;
 
@@ -71,7 +74,7 @@ module.exports = class SlackEventListener {
 
                         switch (requestBody.type) {
                             case "url_verification":
-                                if(requestBody.token == this.verificationToken) {
+                                if (requestBody.token == this.verificationToken) {
                                     this._info("Got valid URL validation request");
                                     text(requestBody.challenge);
                                 } else {
@@ -80,6 +83,7 @@ module.exports = class SlackEventListener {
                                 }
                                 break;
                             default:
+                                this.emit(requestBody.type, requestBody);
                                 ok();
                                 break;
                         }
