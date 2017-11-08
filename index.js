@@ -4,7 +4,6 @@ const _ = require('lodash');
 const program = require('commander');
 const package = require('./package.json');
 const createlogger = require('./logger');
-const SlackEventListener = require('./slackEventListener');
 
 const handlerClasses = require('./handlers');
 
@@ -71,10 +70,6 @@ const influxdb = new influx.InfluxDB({
     password: options.influxdbPassword
 });
 
-//slack event listener
-const slackListener = new SlackEventListener(options.eventPort, options.slackVerificationToken, logger);
-slackListener.listen().catch(e => logger.error(e));
-
 //mqtt client
 const client = mqtt.connect(options.mqtt, {
     clientId: 'agent',
@@ -89,7 +84,19 @@ client.on('error', e => logger.error(e));
 const handlers = handlerClasses.map(
     handler => new handler(options, client, influxdb, logger));
 
-logger.info(`Registered handlers: ${_.values(handlers).map(x=>x.constructor.name)}`);
+logger.info(`Registered handlers: ${_.values(handlers).map(x => x.constructor.name)}`);
+
+const invokeStartAsPromise = async (o) => {
+    const start = o.start && o.start.bind && o.start.bind(o);
+    if (start) {
+        const r = start();
+        if (r && r.catch && r.then) {
+            await r;
+        }
+    }
+};
+
+handlers.forEach(x => invokeStartAsPromise(x).catch(e => logger.error(e)));
 
 client.on('message', (topic, payload, packet) => {
 
@@ -97,11 +104,11 @@ client.on('message', (topic, payload, packet) => {
 
         logger.debug(`Received message on ${topic}`);
         logger.silly(`Message: ${payload}`);
-    
+
         const promises = handlers.map(async x => {
             if (x.pattern) {
                 let match;
-    
+
                 logger.debug(`Testing ${topic} with ${x.pattern} for ${x.constructor.name}`);
                 if (_.isRegExp(x.pattern)) {
                     match = topic.match(x.pattern);
@@ -112,7 +119,7 @@ client.on('message', (topic, payload, packet) => {
                         .filter(p => topic.match(_.isRegExp(p) ? p : new RegExp(p)))
                         .first();
                 }
-    
+
                 if (match) {
                     logger.debug(`Testing ${topic} matched ${x.pattern}`);
                     await x.message(match, payload, packet);
@@ -120,7 +127,7 @@ client.on('message', (topic, payload, packet) => {
                     logger.debug(`Testing ${topic} did not match ${x.pattern}`);
                 }
             }
-    
+
         });
 
         await Promise.all(promises);
