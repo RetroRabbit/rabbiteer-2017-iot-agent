@@ -5,7 +5,7 @@ const EventEmitter = require('events');
 module.exports = class SlackEventListener extends EventEmitter {
     constructor(port, verificationToken, logger) {
         super();
-        
+
         this.port = port;
         this.verificationToken = verificationToken;
 
@@ -71,6 +71,7 @@ module.exports = class SlackEventListener extends EventEmitter {
                 } else {
                     if (requestBody.type) {
                         this._verbose(`Got request ${req.method} ${req.url} with type ${requestBody.type}`);
+                        this._silly(`Slack event body: \n${JSON.stringify(requestBody, null, '  ')}`);
 
                         switch (requestBody.type) {
                             case "url_verification":
