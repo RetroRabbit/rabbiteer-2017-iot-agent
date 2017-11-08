@@ -1,7 +1,8 @@
 const slack = require('slack');
 const _ = require('lodash');
 const SlackEventListener = require('./slackEventListener');
-
+const EmojiConvertor = require('./emoji');
+const _emoji = new EmojiConvertor();
 
 class SlackHandler {
 
@@ -12,6 +13,7 @@ class SlackHandler {
         this._logger = logger;
         this._running = true;
         this._ignore = [];
+        this._emoji = new EmojiConvertor();
 
         //slack event listener
         this._slackListener = new SlackEventListener(
@@ -39,6 +41,10 @@ class SlackHandler {
                     const channel = channel_info.name;
                     const topic = `slack/${channel}`;
 
+                    if (channel == "emoji") {
+                        await this.handle_emoji(text);
+                    }
+
                     const moniker_ix = this._ignore.indexOf(`(slack) ${channel}/${text}`)
                     if (moniker_ix >= 0) {
                         this._logger.silly(`ingoring mqtt message for #${channel}: ${text}`);
@@ -46,12 +52,58 @@ class SlackHandler {
                     } else {
                         this._ignore.push(`(mqtt) ${channel}/${text}`);
 
-                    this._logger.verbose(`Publishing ${text} to mqtt topic slack/${channel}`);
+                        this._logger.verbose(`Publishing ${text} to mqtt topic slack/${channel}`);
                         this._mqtt.publish(topic, text);
                     }
                 }
             }
         });
+    }
+
+    async handle_emoji(text) {
+        const token = this._token;
+
+        const replace_custom_emoji = async (text) => {
+            if (!this._custom_emoji) {
+                const emoji = await slack.emoji.list({ token });
+                this._custom_emoji = emoji.emoji;
+            }
+
+
+            const _ce = this._custom_emoji;
+            if (_ce) {
+
+                const replace_internal = (text) => {
+                    return text.replace(/:([a-zA-z0-9_+-]+?):/, (m, g) => {
+                        const emojiurl = _ce[g];
+                        if (emojiurl) {
+                            if (/^http/.test(emojiurl)) {
+                                return `<img src="${emojiurl}" />`;
+                            } else if (/^alias:/.test(emojiurl)) {
+                                return replace_internal(_emoji.replace_colons(`:${emojiurl.substring(5)}:`));
+                            }
+                        }
+                    })
+                };
+
+                return replace_internal(text);
+
+            } else {
+                return text;
+            }
+        };
+
+        const replaced1 = _emoji.replace_colons(text);
+        const replaced2 = await replace_custom_emoji(replaced1);
+        const firstImage = replaced2.match(/<img src="(.+?)" /);
+        const url = firstImage && firstImage[1];
+        if (url) {
+            this._logger.verbose(`Got emoji in message: ${url}`);
+            //TODO: get image
+            //TODO: resize
+            //TODO: convert to gif
+            //TODO: publish mqtt
+        }
     }
 
     async start() {
