@@ -10,6 +10,10 @@ const handlerClasses = require('./handlers');
 
 const rxHostPort = /^([^\s:]+)(?::(\d+))?$/;
 
+process.on('unhandledRejection', (reason, p) => {
+    console.error(`Unhandled Rejection at: Promise ${p} reason: ${reason} stack:\n ${reason.stack}`);
+    process.exit(-1);
+});
 
 program
     .version(package.version)
