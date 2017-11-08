@@ -40,12 +40,11 @@ class SlackHandler {
                     const topic = `slack/${channel}`;
                     this._logger.verbose(`Publishing ${text} to mqtt topic slack/${channel}`);
                     
-                    const moniker = `${topic}/${text}`;
-                    const moniker_ix = this._ignore.indexOf(moniker)
+                    const moniker_ix = this._ignore.indexOf(`(slack) ${channel}/${text}`)
                     if(moniker_ix >= 0) {
                         this._ignore.splice(moniker_ix, 1);
                     } else {
-                        this._ignore.push(moniker);
+                        this._ignore.push(`(mqtt) ${channel}/${text}`);
                         this._mqtt.publish(topic, text);
                     }
                 }
@@ -110,12 +109,12 @@ class SlackHandler {
                 const text = payload.toString();
                 this._logger.verbose(`Sending ${text} to slack channel ${channel} (${channel_id})`);
 
-                const moniker = `${channel}/${text}`;
-                const moniker_ix = this._ignore.indexOf(moniker)
+
+                const moniker_ix = this._ignore.indexOf(`(mqtt) ${channel}/${text}`)
                 if(moniker_ix >= 0) {
                     this._ignore.splice(moniker_ix, 1);
                 } else {
-                    this._ignore.push(moniker);
+                    this._ignore.push(`(slack) ${channel}/${text}`);
                     await slack.chat.postMessage({ token, channel: channel_id, text });
                 }
             }
