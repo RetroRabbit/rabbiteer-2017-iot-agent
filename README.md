@@ -5,12 +5,15 @@ InfluxDB and does some other useful stuffs.
 
 ## Installation
 
-TODO: Make an installation process
+None unfortunately.
 
 ## Usage
 
 In leu of actual instructions. Here's the `--help` output:
 ```
+
+Usage: rabbiteer-2017-iot-agent [options]
+
 
   Options:
 
@@ -25,16 +28,14 @@ In leu of actual instructions. Here's the `--help` output:
     -r, --rabbitmq [url]                The RabbitMQ management interface url. Defaults to http://localhost:15672/
     --rabbitmq-username [username]      The RabbitMQ username. Defaults to the MQTT username
     --rabbitmq-password [password]      The RabbitMQ password. Defaults to the MQTT password
+    --slack-token [token]               A token for accessing the slack API
+    --slack-verification-token [token]  A token for verifying the requests for the events API
+    --event-port [port]                 The port on which to listen for HTTP events. Defaults to $PORT or 5295
+    --loglevel [level]                  The minimum log level. Same as npm log levels. Default is info.
     -h, --help                          output usage information
+
 ```
 
-## Contributing
-
-1. Fork it!
-2. Create your feature branch: `git checkout -b my-new-feature`
-3. Commit your changes: `git commit -am 'Add some feature'`
-4. Push to the branch: `git push origin my-new-feature`
-5. Submit a pull request :D
 
 ## License
 
