@@ -1302,9 +1302,9 @@ mqtt-packet@^5.4.0:
     process-nextick-args "^1.0.7"
     safe-buffer "^5.1.0"
 
-mqtt@^2.13.0:
-  version "2.13.0"
-  resolved "https://registry.yarnpkg.com/mqtt/-/mqtt-2.13.0.tgz#cbf3fae8f0c48328472b0d5f8e049cc800957d7e"
+mqtt@^2.15.0:
+  version "2.15.0"
+  resolved "https://registry.yarnpkg.com/mqtt/-/mqtt-2.15.0.tgz#64bd27b7b75b22fa9594fae83c71cdada40bd460"
   dependencies:
     commist "^1.0.0"
     concat-stream "^1.6.0"
@@ -1313,7 +1313,7 @@ mqtt@^2.13.0:
     inherits "^2.0.3"
     minimist "^1.2.0"
     mqtt-packet "^5.4.0"
-    pump "^1.0.2"
+    pump "^2.0.0"
     readable-stream "^2.3.3"
     reinterval "^1.1.0"
     split2 "^2.1.1"
@@ -1594,9 +1594,16 @@ pseudomap@^1.0.2:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/pseudomap/-/pseudomap-1.0.2.tgz#f052a28da70e618917ef0a8ac34c1ae5a68286b3"
 
-pump@^1.0.0, pump@^1.0.2:
+pump@^1.0.0:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/pump/-/pump-1.0.2.tgz#3b3ee6512f94f0e575538c17995f9f16990a5d51"
+  dependencies:
+    end-of-stream "^1.1.0"
+    once "^1.3.1"
+
+pump@^2.0.0:
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/pump/-/pump-2.0.1.tgz#12399add6e4cf7526d973cbc8b5ce2e2908b3909"
   dependencies:
     end-of-stream "^1.1.0"
     once "^1.3.1"
